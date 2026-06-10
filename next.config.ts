@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+
+  output: "standalone",
+
   generateBuildId: async () => {
     // Cố định Build ID để tránh lệch manifest trên server deploy chập chờn
     return 'vinfast-fixed-id';
