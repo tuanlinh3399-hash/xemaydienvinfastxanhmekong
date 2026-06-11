@@ -44,8 +44,8 @@ export default function BlogFilterGrid({ initialPosts }: BlogFilterGridProps) {
                         key={category}
                         onClick={() => setActiveCategory(category)}
                         className={`px-6 py-2.5 rounded-full font-semibold transition-all duration-300 shadow-sm border ${activeCategory === category
-                                ? 'bg-vinfast-blue text-white border-vinfast-blue scale-105'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-vinfast-blue hover:text-vinfast-blue hover:shadow-md'
+                            ? 'bg-vinfast-blue text-white border-vinfast-blue scale-105'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-vinfast-blue hover:text-vinfast-blue hover:shadow-md'
                             }`}
                     >
                         {category}
@@ -65,38 +65,48 @@ export default function BlogFilterGrid({ initialPosts }: BlogFilterGridProps) {
                 <>
                     {/* Featured Hero Post */}
                     {featuredPost && (
-                        <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 group animate-fade-in relative z-10 w-full mb-12">
-                            <div className="grid grid-cols-1 lg:grid-cols-2">
-                                <div className="relative h-72 lg:h-auto overflow-hidden">
-                                    <Image
-                                        src={featuredPost.media?.url || '/images/placeholder.webp'}
-                                        alt={featuredPost.title}
-                                        fill
-                                        className="object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
-                                        unoptimized={!featuredPost.media?.url?.includes('unsplash')}
-                                    />
-                                    <div className="absolute top-4 left-4 bg-vinfast-blue text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md uppercase tracking-wider">
-                                        Bài Viết Mới Nhất
-                                    </div>
+                        <div className="flex flex-col lg:flex-row bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 max-w-7xl m-auto group animate-fade-in relative z-10 mb-12">
+                            {/* Cột trái: Hình ảnh */}
+                            <div className="relative w-full lg:w-[55%] aspect-[1200/630] shrink-0 bg-gray-100 overflow-hidden">
+                                <Image
+                                    src={featuredPost.media?.url || '/images/placeholder.webp'}
+                                    alt={featuredPost.title}
+                                    fill
+                                    className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 55vw"
+                                    unoptimized={!featuredPost.media?.url?.includes('unsplash')}
+                                    priority
+                                />
+                                <div className="absolute top-4 left-4 bg-vinfast-blue text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md uppercase tracking-wider">
+                                    Bài Viết Mới Nhất
                                 </div>
+                            </div>
 
-                                <div className="p-8 md:p-12 xl:p-16 flex flex-col justify-center">
-                                    <div className="flex items-center gap-4 text-sm text-vinfast-blue font-semibold mb-4">
-                                        <span className="bg-blue-50 px-3 py-1 rounded-md">{featuredPost.category}</span>
-                                        <span className="flex items-center gap-1 text-gray-500"><Calendar size={16} className="mb-0.5" /> {new Date(featuredPost.created_at).toLocaleDateString('vi-VN')}</span>
+                            {/* Cột phải: Nội dung */}
+                            <div className="relative w-full lg:w-[45%]">
+                                <div className="flex flex-col justify-between p-5 lg:absolute lg:inset-0 lg:p-6 lg:overflow-hidden h-full">
+                                    <div>
+                                        <div className="flex items-center gap-4 text-vinfast-blue font-semibold text-xs lg:text-sm mb-2 lg:mb-3">
+                                            <span className="bg-blue-50 px-3 py-1 rounded-md">{featuredPost.category}</span>
+                                            <span className="flex items-center gap-1 text-gray-500">
+                                                <Calendar size={14} className="mb-0.5" /> {new Date(featuredPost.created_at).toLocaleDateString('vi-VN')}
+                                            </span>
+                                        </div>
+                                        <h2 className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 group-hover:text-vinfast-blue transition-colors leading-tight lg:leading-snug line-clamp-2">
+                                            <Link href={`/blog/${featuredPost.slug}`}>{featuredPost.title}</Link>
+                                        </h2>
+                                        <p className="line-clamp-3 xl:line-clamp-4 text-sm lg:text-base xl:text-lg leading-snug text-gray-600 mt-2 lg:mt-3" title={featuredPost.excerpt}>
+                                            {featuredPost.excerpt}
+                                        </p>
                                     </div>
-                                    <h2 className="text-3xl lg:text-4xl font-black text-gray-900 mb-6 group-hover:text-vinfast-blue transition-colors leading-tight">
-                                        <Link href={`/blog/${featuredPost.slug}`}>{featuredPost.title}</Link>
-                                    </h2>
-                                    <p className="text-gray-600 text-lg leading-relaxed mb-8 line-clamp-3">
-                                        {featuredPost.excerpt}
-                                    </p>
-                                    <Link
-                                        href={`/blog/${featuredPost.slug}`}
-                                        className="inline-flex items-center gap-2 bg-vinfast-blue self-start text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-lg hover:shadow-xl"
-                                    >
-                                        Đọc Tiếp <ArrowRight size={20} />
-                                    </Link>
+                                    <div className="mt-4 lg:mt-0">
+                                        <Link
+                                            href={`/blog/${featuredPost.slug}`}
+                                            className="inline-flex items-center gap-2 bg-vinfast-blue text-white rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-lg hover:shadow-xl text-xs lg:text-sm px-4 py-2 lg:px-6 lg:py-3"
+                                        >
+                                            Đọc Tiếp <ArrowRight size={16} />
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -104,15 +114,16 @@ export default function BlogFilterGrid({ initialPosts }: BlogFilterGridProps) {
 
                     {/* Standard Grid Layout */}
                     {gridPosts.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl m-auto">
                             {gridPosts.map((post) => (
                                 <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group flex flex-col border border-gray-100">
-                                    <div className="relative h-56 overflow-hidden">
+                                    <div className="relative w-full aspect-[1200/630] overflow-hidden rounded-t-2xl">
                                         <Image
                                             src={post.media?.url || '/images/placeholder.webp'}
                                             alt={post.title}
                                             fill
-                                            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
+                                            className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                             unoptimized={!post.media?.url?.includes('unsplash')}
                                         />
                                         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-vinfast-blue border border-blue-100 px-3 py-1 rounded-md text-xs font-bold shadow-sm">

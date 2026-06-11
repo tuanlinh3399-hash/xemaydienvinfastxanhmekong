@@ -33,6 +33,9 @@ export default async function AdminLayout({
                     <Link href="/admin/promotions" className="block px-4 py-2 hover:bg-blue-800 rounded">
                         Khuyến mãi
                     </Link>
+                    <Link href="/admin/blogs" className="block px-4 py-2 hover:bg-blue-800 rounded">
+                        Tin tức
+                    </Link>
                     {/* <Link href="/admin/leads" className="block px-4 py-2 hover:bg-blue-800 rounded">
                         Khách hàng (Leads)
                     </Link> */}

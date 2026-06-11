@@ -24,23 +24,19 @@ interface RawPost {
     content: string | null;
     category: string;
     created_at: string;
-    media: { url: string } | null;
+    thumbnail_url: string | null;
 }
 
 export default async function BlogPage() {
-    // Lấy bài viết từ Supabase (bảng blogs JOIN media lấy ảnh)
-    // Cột giả định: id, title, slug, excerpt, content, category, created_at, thumbnail_id
+    // Lấy các bài viết đã xuất bản từ Supabase, sắp xếp theo thời gian mới nhất lên đầu
     const { data: postsData, error } = await supabase
         .from('blogs')
-        .select(`
-            id, title, slug, excerpt, content, category, created_at,
-            media:thumbnail_id(url)
-        `)
+        .select('id, title, slug, excerpt, content, category, created_at, thumbnail_url, is_published')
+        .eq('is_published', true)
         .order('created_at', { ascending: false });
 
-    // Fallback: Nếu chưa tạo bảng trong SQL, chúng ta render mảng rỗng hoặc log lỗi.
     if (error) {
-        console.warn("Table 'blogs' might not exist yet or error fetching:", error.message);
+        console.warn("Lỗi khi tải danh sách bài viết blogs:", error.message);
     }
 
     const posts = (postsData as unknown as RawPost[] || []).map((post) => {
@@ -53,8 +49,13 @@ export default async function BlogPage() {
         }
 
         return {
-            ...post,
-            excerpt: finalExcerpt
+            id: post.id,
+            title: post.title,
+            slug: post.slug,
+            excerpt: finalExcerpt,
+            category: post.category,
+            created_at: post.created_at,
+            media: post.thumbnail_url ? { url: post.thumbnail_url } : null
         };
     }) as BlogPost[];
 
