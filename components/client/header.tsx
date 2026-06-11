@@ -161,105 +161,42 @@ export default function Header({ products = [] }: { products?: ProductDisplay[] 
 
                     <div className="border-b border-gray-100">
                         <div className="flex items-center justify-between w-full">
-                            <Link href="/o-to-dien" onClick={() => setIsMenuOpen(false)} className={`${getLinkClass('/o-to-dien')} flex-1 py-4 text-left`}>SẢN PHẨM</Link>
-                            <button onClick={() => toggleSubmenu('products')} className="p-4 text-gray-600 focus:outline-none" aria-label="Mở rộng danh mục sản phẩm">
-                                <ChevronDown size={18} className={`transform transition-transform ${mobileExpanded === 'products' ? 'rotate-180' : ''}`} />
-                            </button>
-                        </div>
-                        <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'products' ? 'max-h-[1000px] pb-4' : 'max-h-0'}`}>
-                            <div className="pl-4 flex flex-col gap-4">
-                                {CATEGORIES.map(cat => (
-                                    <div key={cat.id}>
-                                        <div className="text-xs font-bold text-gray-500 mb-2 uppercase">{cat.label}</div>
-                                        <div className="flex flex-col gap-3 pl-2">
-                                            {products.filter(c => c.category === cat.id).map(car => (
-                                                <Link key={car.id} href={`/o-to-dien/${car.slug}`} onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-gray-700 hover:text-[#1464F4]">
-                                                    {car.name}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <Link href="/products" onClick={() => setIsMenuOpen(false)} className={`${getLinkClass('/products')} flex-1 py-4 text-left`}>SẢN PHẨM</Link>
                         </div>
                     </div>
-
-                    {hasActiveServices ? (
-                        <div className="border-b border-gray-100">
-                            <div className="flex items-center justify-between w-full">
-                                <Link href="/dich-vu" onClick={() => setIsMenuOpen(false)} className={`${getLinkClass('/dich-vu')} flex-1 py-4 text-left`}>DỊCH VỤ</Link>
-                                <button onClick={() => toggleSubmenu('services')} className="p-4 text-gray-600 focus:outline-none" aria-label="Mở rộng danh mục dịch vụ">
-                                    <ChevronDown size={18} className={`transform transition-transform ${mobileExpanded === 'services' ? 'rotate-180' : ''}`} />
-                                </button>
-                            </div>
-                            <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'services' ? 'max-h-64 pb-4' : 'max-h-0'}`}>
-                                <div className="pl-4 flex flex-col gap-4">
-                                    {serviceSettings.booking && (
-                                        <Link href="/dat-lich-dich-vu" onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-gray-700 hover:text-[#1464F4]">Đặt hẹn</Link>
-                                    )}
-                                    {serviceSettings.care && (
-                                        <Link href="/cham-soc-khach-hang" onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-gray-700 hover:text-[#1464F4]">Chăm sóc khách hàng</Link>
-                                    )}
-                                    {serviceSettings.gifts && (
-                                        <Link href="/qua-tang-dich-vu" onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-gray-700 hover:text-[#1464F4]">Quà tặng VinFast</Link>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="border-b border-gray-100">
-                            <Link href="/dich-vu" onClick={() => setIsMenuOpen(false)} className={`block py-4 ${getLinkClass('/dich-vu')}`}>DỊCH VỤ</Link>
-                        </div>
-                    )}
-
                     <div className="border-b border-gray-100">
                         <div className="flex items-center justify-between w-full">
-                            <button
-                                onClick={() => toggleSubmenu('blog')}
-                                className={`${blogLinkClass} flex-1 py-4 text-left focus:outline-none`}
-                            >
-                                TIN TỨC & KHUYẾN MÃI
-                            </button>
-                            <button onClick={() => toggleSubmenu('blog')} className="p-4 text-gray-600 focus:outline-none" aria-label="Mở rộng tin tức và khuyến mãi">
-                                <ChevronDown size={18} className={`transform transition-transform ${mobileExpanded === 'blog' ? 'rotate-180' : ''}`} />
-                            </button>
-                        </div>
-                        <div className={`overflow-hidden transition-all duration-300 ${mobileExpanded === 'blog' ? 'max-h-64 pb-4' : 'max-h-0'}`}>
-                            <div className="pl-4 flex flex-col gap-4">
-                                <Link href="/tin-tuc" onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-gray-700 hover:text-[#1464F4]">Tin tức</Link>
-                                <Link href="/khuyen-mai" onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-gray-700 hover:text-[#1464F4]">Khuyến mãi</Link>
-                            </div>
+                            <Link href="/about" onClick={() => setIsMenuOpen(false)} className={`${getLinkClass('/about')} flex-1 py-4 text-left`}>GIỚI THIỆU</Link>
                         </div>
                     </div>
-
                     <div className="border-b border-gray-100">
-                        <Link href="/tuyen-dung" onClick={() => setIsMenuOpen(false)} className={`block py-4 ${getLinkClass('/tuyen-dung')}`}>TUYỂN DỤNG</Link>
+                        <div className="flex items-center justify-between w-full">
+                            <Link href="/blog" onClick={() => setIsMenuOpen(false)} className={`${getLinkClass('/blog')} flex-1 py-4 text-left`}>TIN TỨC</Link>
+                        </div>
                     </div>
-
+                    {/* <div className="border-b border-gray-100">
+                        <Link href="/tuyen-dung" onClick={() => setIsMenuOpen(false)} className={`block py-4 ${getLinkClass('/tuyen-dung')}`}>TUYỂN DỤNG</Link>
+                    </div> */}
                     <div className="border-b border-gray-100">
                         <Link href="/contact" onClick={() => setIsMenuOpen(false)} className={`block py-4 ${getLinkClass('/contact')}`}>LIÊN HỆ</Link>
                     </div>
 
                     {/* Mobile Utilities */}
                     <div className="pt-6 pb-8 flex flex-col gap-4 text-sm text-gray-600">
-                        <a href={settings?.link_gf_xanh_mekong || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-blue-600">
-                            <img src="/logo_gf.webp" alt="GF Logo" className="h-4 w-auto object-contain" />
-                            <span className="text-sm text-gray-600 transition-colors">Xanh Mekong</span>
-                        </a>
                         <a href={settings?.link_xe_may_dien || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-600">
                             <MapPin size={16} /> Ôtô điện Vinfast
                         </a>
                         <a href={settings?.link_share_vi_tri || settings?.google_maps_link || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-600">
-                            <Map size={16} /> Vị trí
+                            <Map size={16} /> Vị trí Showroom
                         </a>
                         <div className="flex items-center gap-4 pt-2">
-                            <a href={settings?.facebook_link || '#'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi Fanpage Vinfast Xanh Mekong" aria-label="Facebook Fanpage VinFast Xanh Mekong"><Facebook size={16} className="text-[#1877F2]" /></a>
-                            <a href={settings?.tiktok_link || '#'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi TikTok Vinfast Xanh Mekong" aria-label="TikTok VinFast Xanh Mekong">
+                            <a href={settings?.facebook_link || 'https://www.facebook.com/vinfastxanhmekong/'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi Fanpage Vinfast Xanh Mekong" aria-label="Facebook Fanpage VinFast Xanh Mekong"><Facebook size={16} className="text-[#1877F2]" /></a>
+                            <a href={settings?.tiktok_link || 'https://www.tiktok.com/@vinfastxanhmekong'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi TikTok Vinfast Xanh Mekong" aria-label="TikTok VinFast Xanh Mekong">
                                 <svg fill="currentColor" viewBox="0 0 448 512" width="16" height="16" className="text-black">
                                     <path d="M448 209.91a210.06 210.06 0 0 1-122.77-39.25v178.72A162.55 162.55 0 1 1 185 188.31v89.89a74.62 74.62 0 1 0 52.23 71.18V0h88a121.18 121.18 0 0 0 1.86 22.17A122.18 122.18 0 0 0 381 102.39a121.43 121.43 0 0 0 67 20.14Z" />
                                 </svg>
                             </a>
-                            <a href={settings?.zalo_link || '#'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Liên hệ Zalo Vinfast Xanh Mekong" aria-label="Zalo VinFast Xanh Mekong">
+                            <a href={settings?.zalo_link || 'https://zalo.me/0899001177'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Liên hệ Zalo Vinfast Xanh Mekong" aria-label="Zalo VinFast Xanh Mekong">
                                 <img src="/zalo-icon.png" alt="Zalo" className="w-5 h-5 object-contain" />
                             </a>
                         </div>
