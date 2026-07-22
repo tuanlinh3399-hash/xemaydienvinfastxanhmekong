@@ -7,6 +7,7 @@ export interface ProductDisplay {
     name: string;
     slug: string;
     price_from: number | null;
+    sale_price: number | null;
     battery_type?: string;
     category?: string;
     specs: {
@@ -72,9 +73,22 @@ export default function ProductCard({ product }: ProductCardProps) {
                         Tốc độ tối đa {speed}, {battery}
                     </p>
                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-                        <span className="text-lg md:text-xl font-extrabold text-vinfast-blue">
-                            {priceFormatted}
-                        </span>
+                        <div className="flex flex-col justify-center">
+                            {product.sale_price && product.sale_price > 0 && product.price_from && product.sale_price < product.price_from ? (
+                                <>
+                                    <span className="text-xs md:text-sm text-gray-400 line-through mb-0.5">
+                                        {new Intl.NumberFormat('vi-VN').format(product.price_from)} ₫
+                                    </span>
+                                    <span className="text-base md:text-lg font-bold text-vinfast-blue">
+                                        {new Intl.NumberFormat('vi-VN').format(product.sale_price)} ₫
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-base md:text-lg font-bold text-vinfast-blue">
+                                    {product.price_from ? new Intl.NumberFormat('vi-VN').format(product.price_from) + ' ₫' : 'Liên hệ'}
+                                </span>
+                            )}
+                        </div>
                         <div className="text-white bg-vinfast-blue px-3 py-1.5 md:px-5 md:py-2.5 rounded-xl flex items-center gap-2 font-bold group-hover:bg-blue-800 transition-colors text-xs md:text-sm shadow-md group-hover:shadow-lg whitespace-nowrap">
                             Chi tiết <ArrowRight size={16} />
                         </div>

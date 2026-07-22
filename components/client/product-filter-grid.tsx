@@ -79,7 +79,7 @@ export default function ProductFilterGrid({ initialProducts }: { initialProducts
             let query = supabase
                 .from('products')
                 .select(`
-                    id, name, slug, price_from, specs, battery_type, category,
+                    id, name, slug, price_from, sale_price, specs, battery_type, category,
                     media!thumbnail_id(url)
                 `)
                 .order('price_from', { ascending: true });

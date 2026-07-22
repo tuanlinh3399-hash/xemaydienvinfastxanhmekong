@@ -18,7 +18,7 @@ export default async function ProductsPage({
 
     // Fetch top Bestseller Products (Server-side)
     const productSelectQuery = `
-        id, name, slug, price_from, specs, battery_type, category,
+        id, name, slug, price_from, sale_price, specs, battery_type, category,
         media!thumbnail_id(url)
     `;
 

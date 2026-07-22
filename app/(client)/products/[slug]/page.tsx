@@ -97,7 +97,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     let similarQuery = supabase
         .from('products')
         .select(`
-            id, name, slug, price_from, specs, battery_type,
+            id, name, slug, price_from, sale_price, specs, battery_type,
             media!thumbnail_id(url)
         `)
         .neq('id', product.id)
@@ -117,7 +117,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         const { data: moreProducts } = await supabase
             .from('products')
             .select(`
-                id, name, slug, price_from, specs, battery_type,
+                id, name, slug, price_from, sale_price, specs, battery_type,
                 media!thumbnail_id(url)
             `)
             .neq('id', product.id)

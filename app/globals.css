@@ -26,7 +26,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-be-vietnam), sans-serif;
-  scroll-behavior: smooth;
 }
 
 /* Custom Typography Overrides */
@@ -52,4 +51,33 @@ body {
   display: block;
   height: 1rem;
   /* Độ cao của dòng trống bạn muốn */
+}
+
+/* Xử lý ảnh float hoặc align */
+.prose img {
+  @apply rounded-xl max-w-full h-auto object-cover;
+}
+
+/* Xử lý Responsive cho màn hình dưới 1024px (Mobile & Tablet) */
+@media (max-width: 1024px) {
+  /* Nếu Editor xuất ra Table để chia cột */
+  .prose table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .prose td, .prose th {
+    display: block;
+    width: 100% !important;
+  }
+  
+  /* Nếu dùng extension Columns của TipTap (thường có thuộc tính data-type="columns") */
+  .prose [data-type="columns"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  .prose [data-type="column"] {
+    width: 100% !important;
+  }
 }

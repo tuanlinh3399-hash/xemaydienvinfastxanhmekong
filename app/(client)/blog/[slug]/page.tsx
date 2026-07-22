@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { Calendar, ArrowLeft, Tag } from 'lucide-react';
 import { SITE_URL } from '@/lib/constants';
+import RichTextRenderer from '@/components/client/rich-text-renderer';
 
 export const revalidate = 60; // Cache 60s
 
@@ -173,7 +174,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                     {/* Main Content Area */}
                     <div className="mt-8 mb-16 flow-root">
                         {post.content ? (
-                            <div className="prose prose-lg max-w-none prose-img:rounded-xl prose-img:w-full flow-root" dangerouslySetInnerHTML={{ __html: post.content }} />
+                            <RichTextRenderer content={post.content} />
                         ) : (
                             <p className="text-gray-500">Đang cập nhật nội dung chi tiết cho bài viết này.</p>
                         )}

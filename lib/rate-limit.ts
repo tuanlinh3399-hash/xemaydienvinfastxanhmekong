@@ -28,25 +28,31 @@ export async function checkRateLimit(ip: string) {
         return { success: true, message: null };
     }
 
-    // Check long-term block first
-    const longResult = await rateLimitLong.limit(ip);
-    if (!longResult.success) {
-        const resetMinutes = Math.ceil((longResult.reset - Date.now()) / 60000);
-        return {
-            success: false,
-            message: `IP của bạn (${ip}) đang bị tạm khóa. Vui lòng quay lại sau ${resetMinutes} phút.`
-        };
-    }
+    try {
+        // Check long-term block first
+        const longResult = await rateLimitLong.limit(ip);
+        if (!longResult.success) {
+            const resetMinutes = Math.ceil((longResult.reset - Date.now()) / 60000);
+            return {
+                success: false,
+                message: `IP của bạn (${ip}) đang bị tạm khóa. Vui lòng quay lại sau ${resetMinutes} phút.`
+            };
+        }
 
-    // Check short-term block
-    const shortResult = await rateLimitShort.limit(ip);
-    if (!shortResult.success) {
-        const resetMinutes = Math.ceil((shortResult.reset - Date.now()) / 60000);
-        return {
-            success: false,
-            message: `IP của bạn (${ip}) đang bị tạm khóa. Vui lòng quay lại sau ${resetMinutes} phút.`
-        };
-    }
+        // Check short-term block
+        const shortResult = await rateLimitShort.limit(ip);
+        if (!shortResult.success) {
+            const resetMinutes = Math.ceil((shortResult.reset - Date.now()) / 60000);
+            return {
+                success: false,
+                message: `IP của bạn (${ip}) đang bị tạm khóa. Vui lòng quay lại sau ${resetMinutes} phút.`
+            };
+        }
 
-    return { success: true, message: null };
+        return { success: true, message: null };
+    } catch (error) {
+        console.error('Bypassing rate limit due to fetch error:', error);
+        // Không chặn người dùng nếu Redis lỗi
+        return { success: true, message: null };
+    }
 }

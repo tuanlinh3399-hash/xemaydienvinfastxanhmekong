@@ -21,6 +21,7 @@ type Product = {
     name: string;
     slug: string;
     price_from: number;
+    sale_price?: number | null;
     excerpt?: string;
     description?: string;
     is_featured: boolean;
@@ -56,6 +57,7 @@ export default function AdminProductsPage() {
         name: '',
         slug: '',
         price_from: 0,
+        sale_price: '' as number | string,
         excerpt: '',
         description: '',
         is_featured: false,
@@ -174,6 +176,7 @@ export default function AdminProductsPage() {
                 name: product.name || '',
                 slug: product.slug || '',
                 price_from: product.price_from || 0,
+                sale_price: product.sale_price ?? '',
                 excerpt: product.excerpt || '',
                 description: product.description || '',
                 is_featured: product.is_featured || false,
@@ -191,6 +194,7 @@ export default function AdminProductsPage() {
                 name: '',
                 slug: '',
                 price_from: 0,
+                sale_price: '',
                 excerpt: '',
                 description: '',
                 is_featured: false,
@@ -271,11 +275,21 @@ export default function AdminProductsPage() {
                 newThumbnailId = mediaData.id;
             }
 
+            const parsedPrice = Number(formData.price_from);
+            const parsedSalePrice = formData.sale_price === '' ? null : Number(formData.sale_price);
+
+            if (parsedSalePrice !== null && parsedSalePrice >= parsedPrice) {
+                showNotification('error', 'Giá khuyến mãi phải nhỏ hơn giá gốc');
+                setSaving(false);
+                return;
+            }
+
             const payload = {
                 ...(editingProduct?.id ? { id: editingProduct.id } : {}),
                 name: formData.name,
                 slug: formData.slug,
-                price_from: Number(formData.price_from), // ensure number
+                price_from: parsedPrice,
+                sale_price: parsedSalePrice,
                 excerpt: formData.excerpt,
                 description: formData.description,
                 is_featured: formData.is_featured,
@@ -781,6 +795,16 @@ export default function AdminProductsPage() {
                                             <option value="Trung cấp" />
                                             <option value="Cao cấp" />
                                         </datalist>
+                                    </div>
+                                    <div className="space-y-1.5 md:col-span-1">
+                                        <label className="text-sm font-medium text-gray-700">Giá khuyến mãi (VNĐ)</label>
+                                        <input
+                                            type="number"
+                                            value={formData.sale_price}
+                                            onChange={e => setFormData({ ...formData, sale_price: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-vinfast-blue/50 focus:border-vinfast-blue transition-all"
+                                            placeholder="Bỏ trống nếu không giảm giá"
+                                        />
                                     </div>
                                     <div className="space-y-1.5 flex flex-col justify-center pt-6 md:col-span-2">
                                         <label className="flex items-center gap-3 cursor-pointer group w-fit">

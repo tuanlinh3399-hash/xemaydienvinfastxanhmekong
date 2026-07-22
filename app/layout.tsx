@@ -50,7 +50,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="vi" className="scroll-smooth">
+    <html lang="vi">
       <body
         className={`${beVietnamPro.variable} font-sans antialiased bg-vinfast-gray text-gray-900`}
       >
