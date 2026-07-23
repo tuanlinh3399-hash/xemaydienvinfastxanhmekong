@@ -13,7 +13,7 @@ export const revalidate = 60;
 export default async function Home() {
   // Common select query for products
   const productSelectQuery = `
-      id, name, slug, price_from, specs, battery_type, category,
+      id, name, slug, price_from, sale_price, specs, battery_type, category,
       media!thumbnail_id(url)
   `;
 
