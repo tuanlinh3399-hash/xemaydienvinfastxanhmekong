@@ -25,6 +25,8 @@ type Product = {
     excerpt?: string;
     description?: string;
     is_featured: boolean;
+    is_bestseller?: boolean;
+    is_new?: boolean;
     thumbnail_id?: string;
     specs?: ProductSpecs;
     policies?: string[];
@@ -61,6 +63,8 @@ export default function AdminProductsPage() {
         excerpt: '',
         description: '',
         is_featured: false,
+        is_bestseller: false,
+        is_new: false,
         thumbnail_id: '',
         range: '',
         speed: '',
@@ -180,6 +184,8 @@ export default function AdminProductsPage() {
                 excerpt: product.excerpt || '',
                 description: product.description || '',
                 is_featured: product.is_featured || false,
+                is_bestseller: product.is_bestseller || false,
+                is_new: product.is_new || false,
                 thumbnail_id: resolvedUrl, // Lưu trực tiếp Public URL vào state
                 range: product.specs?.range || '',
                 speed: product.specs?.speed || '',
@@ -198,6 +204,8 @@ export default function AdminProductsPage() {
                 excerpt: '',
                 description: '',
                 is_featured: false,
+                is_bestseller: false,
+                is_new: false,
                 thumbnail_id: '',
                 range: '',
                 speed: '',
@@ -293,6 +301,8 @@ export default function AdminProductsPage() {
                 excerpt: formData.excerpt,
                 description: formData.description,
                 is_featured: formData.is_featured,
+                is_bestseller: formData.is_bestseller,
+                is_new: formData.is_new,
                 thumbnail_id: newThumbnailId || null,
                 battery_type: formData.battery_type || null,
                 category: formData.category || null,
@@ -405,6 +415,46 @@ export default function AdminProductsPage() {
 
             if (error) throw error;
             showNotification('success', `Đã cập nhật trạng thái nổi bật cho ${selectedIds.length} sản phẩm`);
+            fetchProducts();
+        } catch (error) {
+            console.error('Error updating products:', error);
+            const e = error as Error;
+            showNotification('error', `Lỗi khi cập nhật trạng thái: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBulkSetBestseller = async (isBestseller: boolean) => {
+        try {
+            setLoading(true);
+            const { error } = await supabase
+                .from('products')
+                .update({ is_bestseller: isBestseller })
+                .in('id', selectedIds);
+
+            if (error) throw error;
+            showNotification('success', `Đã cập nhật trạng thái bán chạy cho ${selectedIds.length} sản phẩm`);
+            fetchProducts();
+        } catch (error) {
+            console.error('Error updating products:', error);
+            const e = error as Error;
+            showNotification('error', `Lỗi khi cập nhật trạng thái: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBulkSetNew = async (isNew: boolean) => {
+        try {
+            setLoading(true);
+            const { error } = await supabase
+                .from('products')
+                .update({ is_new: isNew })
+                .in('id', selectedIds);
+
+            if (error) throw error;
+            showNotification('success', `Đã cập nhật trạng thái mới cho ${selectedIds.length} sản phẩm`);
             fetchProducts();
         } catch (error) {
             console.error('Error updating products:', error);
@@ -560,6 +610,16 @@ export default function AdminProductsPage() {
                                                             }`}>
                                                             {product.is_featured ? 'Nổi bật' : 'Thường'}
                                                         </span>
+                                                        {product.is_bestseller && (
+                                                            <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wide rounded-full bg-red-100 text-red-700 border border-red-200">
+                                                                Bán Chạy
+                                                            </span>
+                                                        )}
+                                                        {product.is_new && (
+                                                            <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wide rounded-full bg-green-100 text-green-700 border border-green-200">
+                                                                Mới
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 font-bold text-vinfast-blue text-base">
@@ -637,7 +697,7 @@ export default function AdminProductsPage() {
 
             {/* Bulk Action Bar */}
             {selectedIds.length > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:ml-32 z-40 bg-white border border-gray-200 shadow-2xl rounded-lg px-6 py-4 flex items-center gap-6 animate-fade-in-up">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:ml-32 z-40 bg-white border border-gray-200 shadow-2xl rounded-lg px-6 py-4 flex flex-wrap justify-center items-center gap-6 animate-fade-in-up w-[90%] max-w-5xl">
                     <div className="flex items-center gap-2 text-sm">
                         <div className="bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded w-8 h-8 flex items-center justify-center">
                             {selectedIds.length}
@@ -645,9 +705,9 @@ export default function AdminProductsPage() {
                         <span className="text-gray-600 font-medium">sản phẩm được chọn</span>
                     </div>
 
-                    <div className="h-8 w-px bg-gray-200"></div>
+                    <div className="h-8 w-px bg-gray-200 hidden md:block"></div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center justify-center gap-3">
                         <button
                             onClick={handleBulkDelete}
                             className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded transition-colors text-sm font-medium"
@@ -672,6 +732,42 @@ export default function AdminProductsPage() {
                         >
                             <StarOff className="w-4 h-4" />
                             Bỏ Nổi bật
+                        </button>
+
+                        <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
+
+                        <button
+                            onClick={() => handleBulkSetBestseller(true)}
+                            className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded transition-colors text-sm font-medium"
+                        >
+                            <Star className="w-4 h-4" />
+                            Đặt Bán chạy
+                        </button>
+
+                        <button
+                            onClick={() => handleBulkSetBestseller(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                        >
+                            <StarOff className="w-4 h-4" />
+                            Bỏ Bán chạy
+                        </button>
+
+                        <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
+
+                        <button
+                            onClick={() => handleBulkSetNew(true)}
+                            className="flex items-center gap-2 px-3 py-2 text-green-600 hover:bg-green-50 rounded transition-colors text-sm font-medium"
+                        >
+                            <Star className="w-4 h-4" />
+                            Đặt Mới
+                        </button>
+
+                        <button
+                            onClick={() => handleBulkSetNew(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                        >
+                            <StarOff className="w-4 h-4" />
+                            Bỏ Mới
                         </button>
 
                         {selectedIds.length === 1 && (
@@ -806,7 +902,7 @@ export default function AdminProductsPage() {
                                             placeholder="Bỏ trống nếu không giảm giá"
                                         />
                                     </div>
-                                    <div className="space-y-1.5 flex flex-col justify-center pt-6 md:col-span-2">
+                                    <div className="pt-6 md:col-span-2 flex flex-wrap gap-8 items-center bg-gray-50/50 p-4 rounded-lg border border-gray-100">
                                         <label className="flex items-center gap-3 cursor-pointer group w-fit">
                                             <div className="relative">
                                                 <input
@@ -819,6 +915,34 @@ export default function AdminProductsPage() {
                                                 <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_featured ? 'translate-x-5' : ''}`}></div>
                                             </div>
                                             <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Sản phẩm nổi bật</span>
+                                        </label>
+
+                                        <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                                            <div className="relative">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only"
+                                                    checked={formData.is_bestseller}
+                                                    onChange={e => setFormData({ ...formData, is_bestseller: e.target.checked })}
+                                                />
+                                                <div className={`block w-11 h-6 rounded-full transition-colors ${formData.is_bestseller ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                                                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_bestseller ? 'translate-x-5' : ''}`}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Xe Bán Chạy</span>
+                                        </label>
+
+                                        <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                                            <div className="relative">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only"
+                                                    checked={formData.is_new}
+                                                    onChange={e => setFormData({ ...formData, is_new: e.target.checked })}
+                                                />
+                                                <div className={`block w-11 h-6 rounded-full transition-colors ${formData.is_new ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_new ? 'translate-x-5' : ''}`}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Mẫu Xe Mới</span>
                                         </label>
                                     </div>
                                     <div className="space-y-1.5 md:col-span-2">
