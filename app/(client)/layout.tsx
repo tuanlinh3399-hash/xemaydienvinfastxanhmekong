@@ -1,5 +1,6 @@
 import Header from '@/components/client/header';
 import Footer from '@/components/client/footer';
+import ChatWidget from '@/components/ChatWidget';
 import StickyContact from '@/components/client/sticky-cta';
 import { SiteSettingsProvider } from '@/components/client/SiteSettingsProvider';
 
@@ -49,6 +50,7 @@ export default function ClientLayout({
                 </main>
                 <Footer />
                 <StickyContact />
+                <ChatWidget />
             </div>
         </SiteSettingsProvider>
     );
