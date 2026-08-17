@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { Resend } from 'resend';
+import { FALLBACK_EMAIL } from '@/lib/constants';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -31,10 +32,14 @@ export async function submitLead(formData: {
         // 2. Try to send email with Resend
         try {
             console.log("Đang bắt đầu gửi email...");
+            const adminEmails = process.env.ADMIN_EMAIL
+                ? process.env.ADMIN_EMAIL.split(',').map(email => email.trim()).filter(Boolean)
+                : [FALLBACK_EMAIL];
+
             // Send Email
             const data = await resend.emails.send({
-                from: 'VinFast Mekong <onboarding@resend.dev>',
-                to: 'vinfastxanhmekong@gmail.com',
+                from: 'no-reply@vinfastxanhmekong.vn',
+                to: adminEmails,
                 subject: '[Mới] Có khách hàng quan tâm xe từ website.',
                 html: `
                     <h2>Thông báo khách hàng mới</h2>
