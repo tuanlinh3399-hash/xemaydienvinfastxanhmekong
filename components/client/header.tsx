@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, MapPin, Map, Phone, Facebook } from 'lucide-react';
+import { Menu, X, MapPin, Map, Phone, Facebook, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ProductDisplay } from './product-card';
 import { useBranch } from '@/components/client/BranchProvider';
@@ -17,11 +17,35 @@ const DEFAULT_TIKTOK_URL = 'https://www.tiktok.com/@vinfastxanhmekong';
 
 export default function Header({ products = [] }: { products?: ProductDisplay[] }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isBranchOpen, setIsBranchOpen] = useState(false);
+    const [isMobileBranchOpen, setIsMobileBranchOpen] = useState(false);
     const [serviceSettings, setServiceSettings] = useState({ booking: true, care: true, gifts: true });
     const pathname = usePathname();
 
+    const desktopDropdownRef = useRef<HTMLDivElement>(null);
+    const mobileDropdownRef = useRef<HTMLDivElement>(null);
+
     const { currentBranch, branchId, branchList, switchBranch, isMounted } = useBranch();
     const { settings } = useSiteSettings();
+
+    // Click outside handler để tự động đóng dropdown khi click ra ngoài
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            if (desktopDropdownRef.current && !desktopDropdownRef.current.contains(event.target as Node)) {
+                setIsBranchOpen(false);
+            }
+            if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target as Node)) {
+                setIsMobileBranchOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, []);
 
     // Giá trị tĩnh chuẩn mực khớp 100% với Server khi chưa mount
     const defaultBranch = BRANCHES[DEFAULT_BRANCH_ID];
@@ -108,22 +132,62 @@ export default function Header({ products = [] }: { products?: ProductDisplay[] 
                         {/* Top Row (Utilities) */}
                         <div className="w-full">
                             <div className="flex items-center gap-5 border-b border-gray-300 pb-2 w-max ml-auto">
-                                {/* Branch Selector */}
-                                <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full text-xs text-vinfast-blue">
-                                    <MapPin size={13} className="text-vinfast-blue shrink-0" />
-                                    <span className="text-gray-500 font-normal">Chi nhánh:</span>
-                                    <select
-                                        value={activeBranchId}
-                                        onChange={(e) => switchBranch(e.target.value)}
-                                        className="bg-transparent font-bold text-vinfast-blue cursor-pointer outline-none border-none py-0"
+                                {/* Custom Branch Selector Dropdown */}
+                                <div ref={desktopDropdownRef} className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsBranchOpen((prev) => !prev)}
+                                        className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100/70 border border-blue-200 px-3 py-1 rounded-full text-xs text-vinfast-blue transition-colors cursor-pointer select-none"
+                                        aria-expanded={isBranchOpen}
+                                        aria-haspopup="true"
                                         aria-label="Chọn chi nhánh VinFast Xanh Mekong"
                                     >
-                                        {branchList.map((b) => (
-                                            <option key={b.id} value={b.id} className="text-gray-800">
-                                                {b.shortName}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <MapPin size={13} className="text-vinfast-blue shrink-0" />
+                                        <span className="text-gray-500 font-normal">Chi nhánh:</span>
+                                        <span className="font-bold text-vinfast-blue">{activeBranch.shortName}</span>
+                                        <ChevronDown
+                                            size={13}
+                                            className={`text-vinfast-blue transition-transform duration-200 ${
+                                                isBranchOpen ? 'rotate-180' : 'rotate-0'
+                                            }`}
+                                        />
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    <div
+                                        className={`absolute right-0 mt-1.5 w-44 bg-white border border-blue-100 rounded-xl shadow-lg py-1.5 z-50 transition-all duration-200 ease-in-out origin-top ${
+                                            isBranchOpen
+                                                ? 'opacity-100 scale-100 pointer-events-auto'
+                                                : 'opacity-0 scale-95 pointer-events-none'
+                                        }`}
+                                    >
+                                        <div className="px-3 py-1 text-[10px] uppercase tracking-wider font-semibold text-gray-400">
+                                            Chọn chi nhánh
+                                        </div>
+                                        {branchList.map((b) => {
+                                            const isSelected = b.id === activeBranchId;
+                                            return (
+                                                <button
+                                                    key={b.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        switchBranch(b.id);
+                                                        setIsBranchOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-blue-50 font-bold text-vinfast-blue'
+                                                            : 'text-gray-700 hover:bg-blue-50 hover:text-vinfast-blue font-medium'
+                                                    }`}
+                                                >
+                                                    <span>{b.shortName}</span>
+                                                    {isSelected && (
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-vinfast-blue shrink-0 ml-2" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
                                 {/* Hotline theo chi nhánh */}
@@ -181,7 +245,10 @@ export default function Header({ products = [] }: { products?: ProductDisplay[] 
                     {/* Mobile Hamburger Menu Toggle */}
                     <button
                         className="lg:hidden p-2 text-black"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        onClick={() => {
+                            setIsMenuOpen(!isMenuOpen);
+                            if (isMenuOpen) setIsMobileBranchOpen(false);
+                        }}
                         aria-label={isMenuOpen ? "Đóng menu navigation" : "Mở menu navigation"}
                     >
                         {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -217,26 +284,66 @@ export default function Header({ products = [] }: { products?: ProductDisplay[] 
 
                     {/* Mobile Utilities */}
                     <div className="pt-4 pb-8 flex flex-col gap-3.5 text-sm text-gray-600">
-                        {/* Mobile Branch Selector */}
-                        <div className="flex items-center justify-between bg-blue-50/80 border border-blue-200 p-2.5 rounded-xl">
-                            <div className="flex items-center gap-2 text-vinfast-blue font-semibold text-xs">
-                                <MapPin size={15} />
-                                <span>Chi nhánh:</span>
+                        {/* Mobile Custom Branch Selector Dropdown */}
+                        <div ref={mobileDropdownRef} className="relative">
+                            <div className="flex items-center justify-between bg-blue-50/80 border border-blue-200 p-2.5 rounded-xl">
+                                <div className="flex items-center gap-2 text-vinfast-blue font-semibold text-xs">
+                                    <MapPin size={15} />
+                                    <span>Chi nhánh:</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsMobileBranchOpen((prev) => !prev)}
+                                    className="flex items-center gap-1.5 bg-white border border-blue-200 font-bold text-vinfast-blue text-xs rounded-lg px-2.5 py-1.5 shadow-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                                    aria-expanded={isMobileBranchOpen}
+                                    aria-haspopup="true"
+                                >
+                                    <span>{activeBranch.shortName}</span>
+                                    <ChevronDown
+                                        size={13}
+                                        className={`text-vinfast-blue transition-transform duration-200 ${
+                                            isMobileBranchOpen ? 'rotate-180' : 'rotate-0'
+                                        }`}
+                                    />
+                                </button>
                             </div>
-                            <select
-                                value={activeBranchId}
-                                onChange={(e) => {
-                                    switchBranch(e.target.value);
-                                    setIsMenuOpen(false);
-                                }}
-                                className="bg-white border border-blue-200 font-bold text-vinfast-blue text-xs rounded-lg px-2.5 py-1 cursor-pointer outline-none"
+
+                            {/* Mobile Dropdown Menu */}
+                            <div
+                                className={`absolute left-0 right-0 mt-1 bg-white border border-blue-100 rounded-xl shadow-xl py-1.5 z-30 transition-all duration-200 ease-in-out origin-top ${
+                                    isMobileBranchOpen
+                                        ? 'opacity-100 scale-100 pointer-events-auto'
+                                        : 'opacity-0 scale-95 pointer-events-none'
+                                }`}
                             >
-                                {branchList.map((b) => (
-                                    <option key={b.id} value={b.id}>
-                                        {b.shortName}
-                                    </option>
-                                ))}
-                            </select>
+                                {branchList.map((b) => {
+                                    const isSelected = b.id === activeBranchId;
+                                    return (
+                                        <button
+                                            key={b.id}
+                                            type="button"
+                                            onClick={() => {
+                                                switchBranch(b.id);
+                                                setIsMobileBranchOpen(false);
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between transition-colors ${
+                                                isSelected
+                                                    ? 'bg-blue-50 font-bold text-vinfast-blue'
+                                                    : 'text-gray-700 hover:bg-blue-50 hover:text-vinfast-blue font-medium'
+                                            }`}
+                                        >
+                                            <div>
+                                                <div className="font-semibold">{b.shortName}</div>
+                                                <div className="text-[11px] text-gray-500 font-normal">{b.address}</div>
+                                            </div>
+                                            {isSelected && (
+                                                <span className="w-2 h-2 rounded-full bg-vinfast-blue shrink-0 ml-2" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         <a href={`tel:${cleanPhone}`} className="flex items-center gap-2 font-bold text-vinfast-blue hover:text-blue-800">
