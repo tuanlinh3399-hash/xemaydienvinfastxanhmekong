@@ -1,28 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, AlertCircle, MessageSquare } from 'lucide-react';
 import { submitLead } from '@/app/actions/lead';
 import { useSiteSettings } from '@/components/client/SiteSettingsProvider';
+import { useBranch } from '@/components/client/BranchProvider';
 import { FALLBACK_EMAIL } from '@/lib/constants';
+import { BRANCHES, BRANCH_LIST, DEFAULT_BRANCH_ID } from '@/lib/branches';
 
 export default function ContactClient() {
     const { settings } = useSiteSettings();
-    const fallbackAddress = "Số 10362, đường Võ Nguyên Giáp, P.Hưng Phú, TP.Cần Thơ";
-    const fallbackPhone = "0899 00 11 77";
-    const fallbackEmail = FALLBACK_EMAIL;
-    const fallbackGoogleMaps = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3928.84145437704!2d105.76802281479443!3d10.029938992830847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a0883d2192b0f1%3A0x4c90a391d232ccce!2zMjc0IMSQLiAzMCBUaMOhbmcgNCwgWHXDom4gS2jDoW5oLCBOaW5oIEtp4buBdSwgQ-G6p24gVGjGoSwgVmnhu4d0IE5hbQ!5e0!3m2!1svi!2s!4v1680000000000!5m2!1svi!2s";
+    const { currentBranch, branchList, switchBranch, isMounted } = useBranch();
+
+    const defaultBranch = BRANCHES[DEFAULT_BRANCH_ID];
+    const activeBranch = isMounted ? currentBranch : defaultBranch;
+
+    const displayAddress = (isMounted && settings?.address) ? settings.address : activeBranch.address;
+    const displayPhone = (isMounted && (settings?.hotline || settings?.phone))
+        ? (settings.hotline || settings.phone!)
+        : activeBranch.hotline;
+    const cleanPhone = displayPhone.replace(/\s+/g, '');
+    const displayEmail = (isMounted && settings?.email)
+        ? settings.email
+        : (activeBranch.email || FALLBACK_EMAIL);
+    const displayMapEmbed = (isMounted && settings?.google_maps_link)
+        ? settings.google_maps_link
+        : activeBranch.mapEmbedUrl;
+    const displayZaloUrl = (isMounted && settings?.zalo_link)
+        ? settings.zalo_link
+        : `https://zalo.me/${cleanPhone}`;
+    const displayOpeningHours = activeBranch.openingHours || '08:00 - 20:00 (Thứ 2 - Chủ Nhật)';
+    const DEFAULT_FACEBOOK_URL = 'https://www.facebook.com/vinfastxanhmekong/';
+    const displayFacebookUrl = (isMounted && (settings?.fanpage_url || settings?.facebook_link))
+        ? (settings?.fanpage_url || settings?.facebook_link!)
+        : DEFAULT_FACEBOOK_URL;
 
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
+        branch: activeBranch.name,
         car_model: '',
         notes: ''
     });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, branch: activeBranch.name }));
+    }, [activeBranch.name]);
+
+    const handleBranchSelect = (branchId: string) => {
+        switchBranch(branchId);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -46,18 +77,24 @@ export default function ContactClient() {
         }
 
         try {
-            const result = await submitLead(formData);
+            const result = await submitLead({
+                full_name: formData.full_name,
+                phone: formData.phone,
+                branch: formData.branch,
+                car_model: formData.car_model,
+                notes: formData.notes
+            });
 
             if (!result.success) {
                 throw new Error(result.error);
             }
 
             setStatus('success');
-            setFormData({ full_name: '', phone: '', car_model: '', notes: '' });
-        } catch (error) {
+            setFormData({ full_name: '', phone: '', branch: currentBranch.name, car_model: '', notes: '' });
+        } catch (error: any) {
             console.error('Submit error:', error);
             setStatus('error');
-            setErrorMessage('Có lỗi xảy ra khi gửi thông tin. Vui lòng thử lại sau.');
+            setErrorMessage(error?.message || 'Có lỗi xảy ra khi gửi thông tin. Vui lòng thử lại sau.');
         } finally {
             setLoading(false);
         }
@@ -84,7 +121,29 @@ export default function ContactClient() {
 
                         {/* LEFT COLUMN: Contact Info & Map */}
                         <div className="p-8 md:p-12 bg-gray-50 flex flex-col h-full border-b lg:border-b-0 lg:border-r border-gray-200">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-8">Thông Tin Liên Hệ</h2>
+                            <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
+                                <h2 className="text-3xl font-bold text-gray-900">Thông Tin Liên Hệ</h2>
+                                {/* Branch Selector */}
+                                <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+                                    {branchList.map((b) => {
+                                        const isActive = isMounted ? b.id === currentBranch.id : b.id === DEFAULT_BRANCH_ID;
+                                        return (
+                                            <button
+                                                key={b.id}
+                                                type="button"
+                                                onClick={() => handleBranchSelect(b.id)}
+                                                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                                    isActive
+                                                        ? 'bg-vinfast-blue text-white shadow-sm'
+                                                        : 'text-gray-600 hover:text-vinfast-blue'
+                                                }`}
+                                            >
+                                                {b.shortName}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
 
                             <ul className="space-y-6 text-lg text-gray-700 mb-10">
                                 <li className="flex items-start gap-4">
@@ -92,8 +151,8 @@ export default function ContactClient() {
                                         <MapPin size={24} />
                                     </div>
                                     <div className="pt-1">
-                                        <h4 className="font-bold text-gray-900 mb-1">Địa chỉ Showroom</h4>
-                                        <p className="leading-relaxed text-gray-600">{settings?.address || fallbackAddress}</p>
+                                        <h4 className="font-bold text-gray-900 mb-1">Địa chỉ Showroom ({activeBranch.shortName})</h4>
+                                        <p className="leading-relaxed text-gray-600">{displayAddress}</p>
                                     </div>
                                 </li>
 
@@ -103,7 +162,7 @@ export default function ContactClient() {
                                     </div>
                                     <div className="pt-1">
                                         <h4 className="font-bold text-gray-900 mb-1">Hotline Tư Vấn</h4>
-                                        <a href={`tel:${settings?.phone?.replace(/\s+/g, '') || fallbackPhone.replace(/\s+/g, '')}`} className="text-vinfast-blue font-bold hover:underline">{settings?.phone || fallbackPhone}</a>
+                                        <a href={`tel:${cleanPhone}`} className="text-vinfast-blue font-bold hover:underline">{displayPhone}</a>
                                     </div>
                                 </li>
 
@@ -112,8 +171,8 @@ export default function ContactClient() {
                                         <Mail size={24} />
                                     </div>
                                     <div className="pt-1">
-                                        <h4 className="font-bold text-gray-900 mb-1">Email Kỹ Thuật & Bán Hàng</h4>
-                                        <a href={`mailto:${settings?.email || fallbackEmail}`} className="text-vinfast-blue hover:underline">{settings?.email || fallbackEmail}</a>
+                                        <h4 className="font-bold text-gray-900 mb-1">Email Tiếp Nhận</h4>
+                                        <a href={`mailto:${displayEmail}`} className="text-vinfast-blue hover:underline">{displayEmail}</a>
                                     </div>
                                 </li>
 
@@ -123,14 +182,14 @@ export default function ContactClient() {
                                     </div>
                                     <div className="pt-1">
                                         <h4 className="font-bold text-gray-900 mb-1">Giờ Mở Cửa</h4>
-                                        <p className="text-gray-600">08:00 - 20:00 (Thứ 2 - Chủ Nhật)</p>
+                                        <p className="text-gray-600">{displayOpeningHours}</p>
                                     </div>
                                 </li>
                             </ul>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-8">
                                 <a
-                                    href="https://facebook.com/vinfastxanhmekong"
+                                    href={displayFacebookUrl}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-md text-center"
@@ -138,43 +197,29 @@ export default function ContactClient() {
                                     Fanpage Facebook
                                 </a>
                                 <a
-                                    href={`https://zalo.me/${settings?.phone?.replace(/\s+/g, '') || fallbackPhone.replace(/\s+/g, '')}`}
+                                    href={displayZaloUrl}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-md text-center"
                                 >
-                                    <MessageSquare size={20} /> Chat Zalo
+                                    <MessageSquare size={20} /> Chat Zalo ({activeBranch.shortName})
                                 </a>
                             </div>
 
-                            {/* Google Maps Embed */}
-                            {settings?.google_maps_link ? (
-                                <div className="mt-auto h-64 w-full rounded-2xl overflow-hidden shadow-sm border border-gray-200 shrink-0">
-                                    <iframe
-                                        src={settings.google_maps_link}
-                                        width="100%"
-                                        height="100%"
-                                        style={{ border: 0 }}
-                                        allowFullScreen={true}
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                        className="border-0"
-                                    ></iframe>
-                                </div>
-                            ) : !settings ? (
-                                <div className="mt-auto h-64 w-full rounded-2xl overflow-hidden shadow-sm border border-gray-200 shrink-0">
-                                    <iframe
-                                        src={fallbackGoogleMaps}
-                                        width="100%"
-                                        height="100%"
-                                        style={{ border: 0 }}
-                                        allowFullScreen={true}
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                        className="border-0"
-                                    ></iframe>
-                                </div>
-                            ) : null}
+                            {/* Google Maps Embed theo chi nhánh (không dùng key động) */}
+                            <div className="mt-auto h-64 w-full rounded-2xl overflow-hidden shadow-sm border border-gray-200 shrink-0">
+                                <iframe
+                                    src={displayMapEmbed}
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    allowFullScreen={true}
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    className="border-0"
+                                    title={`Bản đồ ${activeBranch.name}`}
+                                ></iframe>
+                            </div>
                         </div>
 
                         {/* RIGHT COLUMN: Lead Form */}
@@ -186,7 +231,7 @@ export default function ContactClient() {
                                     </div>
                                     <h3 className="text-3xl font-bold text-gray-900">Đăng ký thành công!</h3>
                                     <p className="text-gray-600 text-lg leading-relaxed max-w-md">
-                                        Cảm ơn bạn! Chuyên viên tư vấn của VinFast Xanh Mekong sẽ liên hệ lại trong ít phút để hỗ trợ bạn.
+                                        Cảm ơn bạn! Chuyên viên tư vấn của {formData.branch || 'VinFast Xanh Mekong'} sẽ liên hệ lại trong ít phút để hỗ trợ bạn.
                                     </p>
                                     <button
                                         onClick={() => setStatus('idle')}
@@ -230,6 +275,22 @@ export default function ContactClient() {
                                                 className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vinfast-blue focus:border-vinfast-blue transition-all outline-none text-gray-800"
                                                 placeholder="VD: 0912345678"
                                             />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Cơ sở tư vấn <span className="text-red-500">*</span></label>
+                                            <select
+                                                value={formData.branch}
+                                                onChange={e => setFormData({ ...formData, branch: e.target.value })}
+                                                className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vinfast-blue focus:border-vinfast-blue transition-all outline-none text-gray-800 cursor-pointer font-medium"
+                                                required
+                                            >
+                                                {BRANCH_LIST.map((b) => (
+                                                    <option key={b.id} value={b.name}>
+                                                        {b.fullName}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
 
                                         <div>

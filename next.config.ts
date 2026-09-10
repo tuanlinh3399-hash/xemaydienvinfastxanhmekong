@@ -23,6 +23,20 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/chi-nhanh/hung-phu',
+        destination: '/?branch=hung-phu',
+        permanent: true,
+      },
+      {
+        source: '/chi-nhanh/binh-thuy',
+        destination: '/?branch=binh-thuy',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -4,14 +4,38 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Phone, Mail, Clock, Facebook } from 'lucide-react';
 import { useSiteSettings } from '@/components/client/SiteSettingsProvider';
+import { useBranch } from '@/components/client/BranchProvider';
 import { FALLBACK_EMAIL } from '@/lib/constants';
+import { BRANCHES, DEFAULT_BRANCH_ID } from '@/lib/branches';
 
 export default function Footer() {
+    const { currentBranch, branchList, switchBranch, isMounted } = useBranch();
     const { settings } = useSiteSettings();
-    const fallbackAddress = "Số 10362, đường Võ Nguyễn Giáp, phường Hưng Phú, TP. Cần Thơ";
-    const fallbackPhone = "0899 00 11 77";
-    const fallbackEmail = FALLBACK_EMAIL;
-    const fallbackGoogleMaps = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3928.84145437704!2d105.76802281479443!3d10.029938992830847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a0883d2192b0f1%3A0x4c90a391d232ccce!2zMjc0IMSQLiAzMCBUaMOhbmcgNCwgWHXDom4gS2jDoW5oLCBOaW5oIEtp4buBdSwgQ-G6p24gVGjGoSwgVmnhu4d0IE5hbQ!5e0!3m2!1svi!2s!4v1680000000000!5m2!1svi!2s";
+
+    // Giá trị tĩnh chuẩn mực khớp 100% với Server khi chưa mount
+    const defaultBranch = BRANCHES[DEFAULT_BRANCH_ID];
+    const activeBranch = isMounted ? currentBranch : defaultBranch;
+
+    // Dữ liệu ưu tiên từ Database (SiteSettings), sau đó đến cấu hình chi nhánh
+    const displayAddress = (isMounted && settings?.address) ? settings.address : activeBranch.address;
+    const displayPhone = (isMounted && (settings?.hotline || settings?.phone))
+        ? (settings.hotline || settings.phone!)
+        : activeBranch.hotline;
+    const cleanPhone = displayPhone.replace(/\s+/g, '');
+    const displayEmail = (isMounted && settings?.email)
+        ? settings.email
+        : (activeBranch.email || FALLBACK_EMAIL);
+    const displayOpeningHours = activeBranch.openingHours || '08:00 - 20:00 (Thứ 2 - Chủ Nhật)';
+    const displayMapEmbed = (isMounted && settings?.google_maps_link)
+        ? settings.google_maps_link
+        : activeBranch.mapEmbedUrl;
+    const displayZaloUrl = (isMounted && settings?.zalo_link)
+        ? settings.zalo_link
+        : `https://zalo.me/${cleanPhone}`;
+    const DEFAULT_FACEBOOK_URL = 'https://www.facebook.com/vinfastxanhmekong/';
+    const displayFacebookUrl = (isMounted && (settings?.fanpage_url || settings?.facebook_link))
+        ? (settings?.fanpage_url || settings?.facebook_link!)
+        : DEFAULT_FACEBOOK_URL;
 
     return (
         <footer className="bg-gray-900 text-white pt-16 pb-8 border-t-4 border-vinfast-blue">
@@ -54,68 +78,105 @@ export default function Footer() {
 
                     {/* Column 3: Contact Info */}
                     <div className="space-y-4 lg:col-span-2">
-                        <h4 className="text-lg font-bold text-white mb-6">Hệ Thống Showroom VinFast Xanh Mekong – Cần Thơ</h4>
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                            <h4 className="text-lg font-bold text-white">Hệ Thống Showroom VinFast Xanh Mekong</h4>
+                            {/* Branch Switcher Tabs */}
+                            <div className="flex items-center gap-1.5 bg-gray-800 p-1 rounded-lg border border-gray-700">
+                                {branchList.map((b) => {
+                                    const isActive = isMounted ? b.id === currentBranch.id : b.id === DEFAULT_BRANCH_ID;
+                                    return (
+                                        <button
+                                            key={b.id}
+                                            type="button"
+                                            onClick={() => switchBranch(b.id)}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                                                isActive
+                                                    ? 'bg-vinfast-blue text-white shadow-sm'
+                                                    : 'text-gray-400 hover:text-white'
+                                            }`}
+                                        >
+                                            {b.shortName}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <ul className="space-y-4 text-sm text-gray-200">
                             <li className="flex items-start gap-4">
-                                <MapPin className="text-gray-300 shrink-0 mt-0.5" size={20} />
-                                <span className="leading-relaxed"> {settings?.address || fallbackAddress}</span>
+                                <MapPin className="text-vinfast-blue shrink-0 mt-0.5" size={20} />
+                                <div>
+                                    <span className="font-semibold text-white block mb-0.5">{activeBranch.name}:</span>
+                                    <span className="leading-relaxed text-gray-300">{displayAddress}</span>
+                                </div>
                             </li>
                             <li className="flex items-center gap-4">
-                                <Phone className="text-gray-300 shrink-0" size={20} />
-                                <span>Hotline/Zalo: <a href={`tel:${settings?.phone?.replace(/\s+/g, '') || fallbackPhone.replace(/\s+/g, '')}`} className="font-bold text-white hover:text-vinfast-blue transition-colors">{settings?.phone || fallbackPhone}</a></span>
+                                <Phone className="text-vinfast-blue shrink-0" size={20} />
+                                <span>
+                                    Hotline:{' '}
+                                    <a
+                                        href={`tel:${cleanPhone}`}
+                                        className="font-bold text-white hover:text-vinfast-blue transition-colors"
+                                    >
+                                        {displayPhone}
+                                    </a>
+                                </span>
                             </li>
                             <li className="flex items-center gap-4">
-                                <Mail className="text-gray-300 shrink-0" size={20} />
-                                <span>Email: <a href={`mailto:${settings?.email || fallbackEmail}`} className="font-medium text-white hover:text-vinfast-blue transition-colors">{settings?.email || fallbackEmail}</a></span>
+                                <Mail className="text-vinfast-blue shrink-0" size={20} />
+                                <span>
+                                    Email:{' '}
+                                    <a
+                                        href={`mailto:${displayEmail}`}
+                                        className="font-medium text-white hover:text-vinfast-blue transition-colors"
+                                    >
+                                        {displayEmail}
+                                    </a>
+                                </span>
                             </li>
                             <li className="flex items-center gap-4">
-                                <Clock className="text-gray-300 shrink-0" size={20} />
-                                <span>Giờ mở cửa: 08:00 - 20:00 (Thứ 2 - Chủ Nhật)</span>
+                                <Clock className="text-vinfast-blue shrink-0" size={20} />
+                                <span>Giờ mở cửa: {displayOpeningHours}</span>
                             </li>
                         </ul>
                         <div className="pt-4 flex items-center gap-4">
-                            <a href="https://facebook.com/vinfastxanhmekong" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition">
+                            <a
+                                href={displayFacebookUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition"
+                                aria-label="Facebook Fanpage"
+                            >
                                 <Facebook size={20} fill="white" />
                             </a>
-                            <a href={`https://zalo.me/${settings?.phone?.replace(/\s+/g, '') || fallbackPhone.replace(/\s+/g, '')}`} target="_blank" rel="noreferrer" className="h-10 px-4 rounded-full bg-blue-500 flex items-center justify-center font-bold text-sm hover:bg-blue-600 transition">
-                                Zalo Chat
+                            <a
+                                href={displayZaloUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="h-10 px-4 rounded-full bg-blue-500 flex items-center justify-center font-bold text-sm hover:bg-blue-600 transition"
+                            >
+                                Zalo Chat ({activeBranch.shortName})
                             </a>
                         </div>
                     </div>
                 </div>
 
-                {/* Google Maps Embed */}
-                {settings?.google_maps_link && (
-                    <div className="w-full h-[250px] md:h-[350px] bg-gray-800 rounded-xl overflow-hidden mb-12 border border-gray-700">
-                        <iframe
-                            src={settings.google_maps_link}
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            allowFullScreen={true}
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                        ></iframe>
-                    </div>
-                )}
-
-                {/* Fallback Map if settings not loaded yet */}
-                {!settings && fallbackGoogleMaps && (
-                    <div className="w-full h-[250px] md:h-[350px] bg-gray-800 rounded-xl overflow-hidden mb-12 border border-gray-700">
-                        <iframe
-                            src={fallbackGoogleMaps}
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            allowFullScreen={true}
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                        ></iframe>
-                    </div>
-                )}
+                {/* Google Maps Embed theo chi nhánh (không dùng key động để tránh crash parentNode) */}
+                <div className="w-full h-[250px] md:h-[350px] bg-gray-800 rounded-xl overflow-hidden mb-12 border border-gray-700">
+                    <iframe
+                        src={displayMapEmbed}
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        allowFullScreen={true}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title={`Bản đồ ${activeBranch.name}`}
+                    ></iframe>
+                </div>
 
                 <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
-                    <p>&copy; {new Date().getFullYear()} VinFast Xanh Mekong. Tất cả quyền được bảo lưu.</p>
+                    <p>&copy; 2026 VinFast Xanh Mekong. Tất cả quyền được bảo lưu.</p>
                     <div className="flex gap-4 mt-4 md:mt-0">
                         <Link href="/privacy" className="hover:text-white transition">Chính sách bảo mật</Link>
                         <Link href="/terms" className="hover:text-white transition">Điều khoản sử dụng</Link>

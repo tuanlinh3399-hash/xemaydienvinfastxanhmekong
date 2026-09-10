@@ -1,25 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { getSettings } from '@/app/actions/settings';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
-        // Using createClient allows us to use the same logic, but we don't require authentication here
-        const supabase = await createClient();
+        const { searchParams } = new URL(request.url);
+        const branch = searchParams.get('branch') || 'hung-phu';
 
-        const { data, error } = await supabase
-            .from('site_settings')
-            .select('*')
-            .eq('id', 1)
-            .single();
-
-        if (error && error.code !== 'PGRST116') {
-            console.error('Error fetching public settings:', error);
-            return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
-        }
-
+        const data = await getSettings(branch);
         return NextResponse.json({ data: data || {} });
     } catch (error) {
-        console.error('Unexpected error:', error);
+        console.error('Error fetching public settings:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

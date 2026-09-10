@@ -4,43 +4,49 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, MapPin, Map, ChevronDown, Facebook } from 'lucide-react';
+import { Menu, X, MapPin, Map, Phone, Facebook } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ProductDisplay } from './product-card';
+import { useBranch } from '@/components/client/BranchProvider';
+import { useSiteSettings } from '@/components/client/SiteSettingsProvider';
+import { BRANCHES, DEFAULT_BRANCH_ID } from '@/lib/branches';
 
-const CATEGORIES = [
-    { id: 'dong_co_dien', label: 'XE ĐỘNG CƠ ĐIỆN' },
-    { id: 'dich_vu', label: 'XE DỊCH VỤ' }
-];
+const DEFAULT_OTO_URL = 'https://vinfastmekong.vn';
+const DEFAULT_FACEBOOK_URL = 'https://www.facebook.com/vinfastxanhmekong/';
+const DEFAULT_TIKTOK_URL = 'https://www.tiktok.com/@vinfastxanhmekong';
 
 export default function Header({ products = [] }: { products?: ProductDisplay[] }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
-    const [settings, setSettings] = useState<any>(null);
     const [serviceSettings, setServiceSettings] = useState({ booking: true, care: true, gifts: true });
-    const [activeTab, setActiveTab] = useState('dong_co_dien');
     const pathname = usePathname();
 
-    const isBlogActive = pathname.startsWith('/tin-tuc') || pathname.startsWith('/khuyen-mai') || pathname.startsWith('/blog');
-    const blogLinkClass = `font-bold hover:text-blue-600 uppercase text-sm transition-colors ${isBlogActive ? 'text-blue-600' : 'text-gray-800'}`;
+    const { currentBranch, branchId, branchList, switchBranch, isMounted } = useBranch();
+    const { settings } = useSiteSettings();
 
-    const hasActiveServices = serviceSettings.booking || serviceSettings.care || serviceSettings.gifts;
+    // Giá trị tĩnh chuẩn mực khớp 100% với Server khi chưa mount
+    const defaultBranch = BRANCHES[DEFAULT_BRANCH_ID];
+    const activeBranch = isMounted ? currentBranch : defaultBranch;
+    const activeBranchId = isMounted ? branchId : DEFAULT_BRANCH_ID;
 
-    const toggleSubmenu = (menu: string) => {
-        setMobileExpanded(mobileExpanded === menu ? null : menu);
-    };
+    // Dữ liệu ưu tiên từ Database (SiteSettings), fallback về chi nhánh tĩnh
+    const displayPhone = (isMounted && (settings?.hotline || settings?.phone))
+        ? (settings.hotline || settings.phone!)
+        : activeBranch.hotline;
+    const cleanPhone = displayPhone.replace(/\s+/g, '');
+    const displayMapUrl = (isMounted && (settings?.map_url || activeBranch.mapShareUrl))
+        ? (settings?.map_url || activeBranch.mapShareUrl)
+        : defaultBranch.mapShareUrl;
+    const displayZaloUrl = (isMounted && settings?.zalo_link)
+        ? settings.zalo_link
+        : `https://zalo.me/${cleanPhone}`;
+    const displayOtoUrl = settings?.link_xe_may_dien || DEFAULT_OTO_URL;
+    const displayFbUrl = (isMounted && (settings?.fanpage_url || settings?.facebook_link))
+        ? (settings?.fanpage_url || settings?.facebook_link!)
+        : DEFAULT_FACEBOOK_URL;
+    const displayTiktokUrl = settings?.tiktok_link || DEFAULT_TIKTOK_URL;
 
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const { data } = await supabase.from('site_settings').select('*').single();
-                if (data) {
-                    setSettings(data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch settings for header:", error);
-            }
-
+        const fetchServiceSettings = async () => {
             try {
                 const { data: servicesData } = await supabase
                     .from('service_settings')
@@ -57,10 +63,9 @@ export default function Header({ products = [] }: { products?: ProductDisplay[] 
             } catch (error) {
                 console.error("Failed to fetch service settings for header:", error);
             }
-
-
         };
-        fetchSettings();
+
+        fetchServiceSettings();
     }, []);
 
     const isActive = (path: string) => {
@@ -102,29 +107,61 @@ export default function Header({ products = [] }: { products?: ProductDisplay[] 
                     <div className="hidden lg:flex flex-col flex-grow justify-center pl-8">
                         {/* Top Row (Utilities) */}
                         <div className="w-full">
-                            <div className="flex items-center gap-6 border-b border-gray-300 pb-2 w-max ml-auto">
+                            <div className="flex items-center gap-5 border-b border-gray-300 pb-2 w-max ml-auto">
+                                {/* Branch Selector */}
+                                <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full text-xs text-vinfast-blue">
+                                    <MapPin size={13} className="text-vinfast-blue shrink-0" />
+                                    <span className="text-gray-500 font-normal">Chi nhánh:</span>
+                                    <select
+                                        value={activeBranchId}
+                                        onChange={(e) => switchBranch(e.target.value)}
+                                        className="bg-transparent font-bold text-vinfast-blue cursor-pointer outline-none border-none py-0"
+                                        aria-label="Chọn chi nhánh VinFast Xanh Mekong"
+                                    >
+                                        {branchList.map((b) => (
+                                            <option key={b.id} value={b.id} className="text-gray-800">
+                                                {b.shortName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
 
+                                {/* Hotline theo chi nhánh */}
+                                <a
+                                    href={`tel:${cleanPhone}`}
+                                    className="flex items-center gap-1.5 text-sm font-bold text-vinfast-blue hover:text-blue-800 transition-colors"
+                                    title={`Gọi Hotline ${activeBranch.name}: ${displayPhone}`}
+                                >
+                                    <Phone size={15} />
+                                    <span>Hotline: {displayPhone}</span>
+                                </a>
 
-                                <a href={settings?.link_xe_may_dien || 'https://vinfastmekong.vn'} target='_blank' rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600">
+                                <a href={displayOtoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600">
                                     <Map size={16} />
                                     <span>Ôtô VinFast</span>
                                 </a>
 
-                                <a href={settings?.link_share_vi_tri || 'https://maps.app.goo.gl/f85DwodnfvtBk1YFA'} target='_blank' rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600">
+                                <a
+                                    href={displayMapUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600"
+                                    title={`Bản đồ ${activeBranch.name}: ${activeBranch.address}`}
+                                >
                                     <MapPin size={16} />
                                     <span>Vị trí Showroom</span>
                                 </a>
 
                                 <div className="flex items-center gap-2">
-                                    <a href={settings?.facebook_link || 'https://www.facebook.com/vinfastxanhmekong/'} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Theo dõi Fanpage Vinfast Xanh Mekong" aria-label="Facebook Fanpage VinFast Xanh Mekong">
+                                    <a href={displayFbUrl} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Theo dõi Fanpage Vinfast Xanh Mekong" aria-label="Facebook Fanpage VinFast Xanh Mekong">
                                         <Facebook size={14} className="text-[#1877F2]" />
                                     </a>
-                                    <a href={settings?.tiktok_link || 'https://www.tiktok.com/@vinfastxanhmekong'} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Theo dõi TikTok Vinfast Xanh Mekong" aria-label="TikTok VinFast Xanh Mekong">
+                                    <a href={displayTiktokUrl} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Theo dõi TikTok Vinfast Xanh Mekong" aria-label="TikTok VinFast Xanh Mekong">
                                         <svg fill="currentColor" viewBox="0 0 448 512" width="14" height="14" className="text-black">
                                             <path d="M448 209.91a210.06 210.06 0 0 1-122.77-39.25v178.72A162.55 162.55 0 1 1 185 188.31v89.89a74.62 74.62 0 1 0 52.23 71.18V0h88a121.18 121.18 0 0 0 1.86 22.17A122.18 122.18 0 0 0 381 102.39a121.43 121.43 0 0 0 67 20.14Z" />
                                         </svg>
                                     </a>
-                                    <a href={settings?.zalo_link || 'https://zalo.me/0899001177'} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Liên hệ Zalo Vinfast Xanh Mekong" aria-label="Zalo VinFast Xanh Mekong">
+                                    <a href={displayZaloUrl} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Liên hệ Zalo Vinfast Xanh Mekong" aria-label="Zalo VinFast Xanh Mekong">
                                         <img src="/zalo-icon.png" alt="Zalo" className="w-5 h-5 object-contain" />
                                     </a>
                                 </div>
@@ -174,29 +211,51 @@ export default function Header({ products = [] }: { products?: ProductDisplay[] 
                             <Link href="/blog" onClick={() => setIsMenuOpen(false)} className={`${getLinkClass('/blog')} flex-1 py-4 text-left`}>TIN TỨC</Link>
                         </div>
                     </div>
-                    {/* <div className="border-b border-gray-100">
-                        <Link href="/tuyen-dung" onClick={() => setIsMenuOpen(false)} className={`block py-4 ${getLinkClass('/tuyen-dung')}`}>TUYỂN DỤNG</Link>
-                    </div> */}
                     <div className="border-b border-gray-100">
                         <Link href="/contact" onClick={() => setIsMenuOpen(false)} className={`block py-4 ${getLinkClass('/contact')}`}>LIÊN HỆ</Link>
                     </div>
 
                     {/* Mobile Utilities */}
-                    <div className="pt-6 pb-8 flex flex-col gap-4 text-sm text-gray-600">
-                        <a href={settings?.link_xe_may_dien || 'https://vinfastmekong.vn'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-600">
-                            <MapPin size={16} /> Ôtô điện Vinfast
+                    <div className="pt-4 pb-8 flex flex-col gap-3.5 text-sm text-gray-600">
+                        {/* Mobile Branch Selector */}
+                        <div className="flex items-center justify-between bg-blue-50/80 border border-blue-200 p-2.5 rounded-xl">
+                            <div className="flex items-center gap-2 text-vinfast-blue font-semibold text-xs">
+                                <MapPin size={15} />
+                                <span>Chi nhánh:</span>
+                            </div>
+                            <select
+                                value={activeBranchId}
+                                onChange={(e) => {
+                                    switchBranch(e.target.value);
+                                    setIsMenuOpen(false);
+                                }}
+                                className="bg-white border border-blue-200 font-bold text-vinfast-blue text-xs rounded-lg px-2.5 py-1 cursor-pointer outline-none"
+                            >
+                                {branchList.map((b) => (
+                                    <option key={b.id} value={b.id}>
+                                        {b.shortName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <a href={`tel:${cleanPhone}`} className="flex items-center gap-2 font-bold text-vinfast-blue hover:text-blue-800">
+                            <Phone size={16} /> Hotline: {displayPhone}
                         </a>
-                        <a href={settings?.link_share_vi_tri || settings?.google_maps_link || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-600">
-                            <Map size={16} /> Vị trí Showroom
+                        <a href={displayMapUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-600">
+                            <MapPin size={16} /> Vị trí: {activeBranch.name}
+                        </a>
+                        <a href={displayOtoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-blue-600">
+                            <Map size={16} /> Ôtô điện Vinfast
                         </a>
                         <div className="flex items-center gap-4 pt-2">
-                            <a href={settings?.facebook_link || 'https://www.facebook.com/vinfastxanhmekong/'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi Fanpage Vinfast Xanh Mekong" aria-label="Facebook Fanpage VinFast Xanh Mekong"><Facebook size={16} className="text-[#1877F2]" /></a>
-                            <a href={settings?.tiktok_link || 'https://www.tiktok.com/@vinfastxanhmekong'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi TikTok Vinfast Xanh Mekong" aria-label="TikTok VinFast Xanh Mekong">
+                            <a href={displayFbUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi Fanpage Vinfast Xanh Mekong" aria-label="Facebook Fanpage VinFast Xanh Mekong"><Facebook size={16} className="text-[#1877F2]" /></a>
+                            <a href={displayTiktokUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Theo dõi TikTok Vinfast Xanh Mekong" aria-label="TikTok VinFast Xanh Mekong">
                                 <svg fill="currentColor" viewBox="0 0 448 512" width="16" height="16" className="text-black">
                                     <path d="M448 209.91a210.06 210.06 0 0 1-122.77-39.25v178.72A162.55 162.55 0 1 1 185 188.31v89.89a74.62 74.62 0 1 0 52.23 71.18V0h88a121.18 121.18 0 0 0 1.86 22.17A122.18 122.18 0 0 0 381 102.39a121.43 121.43 0 0 0 67 20.14Z" />
                                 </svg>
                             </a>
-                            <a href={settings?.zalo_link || 'https://zalo.me/0899001177'} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Liên hệ Zalo Vinfast Xanh Mekong" aria-label="Zalo VinFast Xanh Mekong">
+                            <a href={displayZaloUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 rounded-full" title="Liên hệ Zalo Vinfast Xanh Mekong" aria-label="Zalo VinFast Xanh Mekong">
                                 <img src="/zalo-icon.png" alt="Zalo" className="w-5 h-5 object-contain" />
                             </a>
                         </div>

@@ -49,8 +49,71 @@ export default function RootLayout({
     console.log('GA4 Loaded');
   }
 
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "VinFast Xanh Mekong",
+    "url": "https://vinfastxanhmekong.vn",
+    "logo": "https://vinfastxanhmekong.vn/logo-vinfast.svg",
+    "description": "Đại lý phân phối xe máy điện VinFast chính hãng hàng đầu tại Cần Thơ và Đồng bằng Sông Cửu Long.",
+    "department": [
+      {
+        "@type": "AutoDealer",
+        "name": "VinFast Xanh Mekong - Chi nhánh Hưng Phú",
+        "telephone": "0899001177",
+        "url": "https://vinfastxanhmekong.vn/?branch=hung-phu",
+        "image": "https://vinfastxanhmekong.vn/logo-vinfast.jpg",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Số 10362, đường Võ Nguyên Giáp, P. Hưng Phú, Q. Cái Răng",
+          "addressLocality": "Cần Thơ",
+          "addressRegion": "Cần Thơ",
+          "postalCode": "900000",
+          "addressCountry": "VN"
+        },
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+          ],
+          "opens": "08:00",
+          "closes": "20:00"
+        }
+      },
+      {
+        "@type": "AutoDealer",
+        "name": "VinFast Xanh Mekong - Chi nhánh Bình Thủy",
+        "telephone": "0899001177",
+        "url": "https://vinfastxanhmekong.vn/?branch=binh-thuy",
+        "image": "https://vinfastxanhmekong.vn/logo-vinfast.jpg",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Đường Cách Mạng Tháng 8, P. Bùi Hữu Nghĩa, Q. Bình Thủy",
+          "addressLocality": "Cần Thơ",
+          "addressRegion": "Cần Thơ",
+          "postalCode": "900000",
+          "addressCountry": "VN"
+        },
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+          ],
+          "opens": "08:00",
+          "closes": "20:00"
+        }
+      }
+    ]
+  };
+
   return (
     <html lang="vi">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+      </head>
       <body
         className={`${beVietnamPro.variable} font-sans antialiased bg-vinfast-gray text-gray-900`}
       >

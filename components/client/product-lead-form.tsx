@@ -1,23 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { submitLead } from '@/app/actions/lead';
+import { useBranch } from '@/components/client/BranchProvider';
+import { BRANCH_LIST } from '@/lib/branches';
 
 interface ProductLeadFormProps {
     productName: string;
 }
 
 export default function ProductLeadForm({ productName }: ProductLeadFormProps) {
+    const { currentBranch } = useBranch();
+
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
+        branch: currentBranch.name,
         notes: ''
     });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, branch: currentBranch.name }));
+    }, [currentBranch.name]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,6 +52,7 @@ export default function ProductLeadForm({ productName }: ProductLeadFormProps) {
             const formDataToSubmit = {
                 full_name: formData.full_name,
                 phone: formData.phone,
+                branch: formData.branch,
                 car_model: productName,
                 notes: formData.notes
             };
@@ -56,7 +66,7 @@ export default function ProductLeadForm({ productName }: ProductLeadFormProps) {
             }
 
             setStatus('success');
-            setFormData({ full_name: '', phone: '', notes: '' });
+            setFormData({ full_name: '', phone: '', branch: currentBranch.name, notes: '' });
         } catch (error) {
             console.error('Submit error:', error);
             setStatus('error');
@@ -121,6 +131,22 @@ export default function ProductLeadForm({ productName }: ProductLeadFormProps) {
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vinfast-blue outline-none transition-all"
                         placeholder="VD: 0912345678"
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Cơ sở tư vấn <span className="text-red-500">*</span></label>
+                    <select
+                        value={formData.branch}
+                        onChange={e => setFormData({ ...formData, branch: e.target.value })}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vinfast-blue outline-none transition-all text-gray-800 font-medium cursor-pointer"
+                        required
+                    >
+                        {BRANCH_LIST.map((b) => (
+                            <option key={b.id} value={b.name}>
+                                {b.fullName}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div>

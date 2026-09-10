@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
+import { getSettings, updateSettings } from '@/app/actions/settings';
 import { createClient } from '@/lib/supabase-server';
 import { verifyToken } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const supabase = await createClient();
-
-        // Ensure user is authenticated using getUser() or custom session token
         const { data: { user } } = await supabase.auth.getUser();
         const cookieStore = await cookies();
         const token = cookieStore.get('admin_session')?.value;
@@ -17,63 +16,40 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data, error } = await supabase
-            .from('site_settings')
-            .select('*')
-            .eq('id', 1)
-            .maybeSingle();
+        const { searchParams } = new URL(request.url);
+        const branch = searchParams.get('branch') || 'hung-phu';
 
-        if (error) {
-            console.error('Error fetching settings:', error);
-            return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
-        }
-
-        return NextResponse.json({ data: data || {} });
+        const data = await getSettings(branch);
+        return NextResponse.json({ data });
     } catch (error) {
-        console.error('Unexpected error:', error);
+        console.error('Unexpected error in GET /api/admin/settings:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
 
 export async function PATCH(request: Request) {
     try {
-        const supabase = await createClient();
-
-        // Ensure user is authenticated using getUser() or custom session token
-        const { data: { user } } = await supabase.auth.getUser();
-        const cookieStore = await cookies();
-        const token = cookieStore.get('admin_session')?.value;
-        const valid = await verifyToken(token);
-
-        if (!user && !valid) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
+        const { searchParams } = new URL(request.url);
         const body = await request.json();
-        const { phone, email, address, google_maps_link } = body;
+        const branch = body.branch || searchParams.get('branch') || 'hung-phu';
 
-        // Upsert the data (assuming ID 1 is always the single settings row)
-        const { data, error } = await supabase
-            .from('site_settings')
-            .upsert({ 
-                id: 1, 
-                phone, 
-                email, 
-                address, 
-                google_maps_link,
-                updated_at: new Date().toISOString()
-            })
-            .select()
-            .single();
+        const result = await updateSettings(branch, {
+            phone: body.phone,
+            email: body.email,
+            address: body.address,
+            google_maps_link: body.google_maps_link
+        });
 
-        if (error) {
-            console.error('Error updating settings:', error);
-            return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+        if (!result.success) {
+            return NextResponse.json(
+                { error: result.error, needMigration: result.needMigration },
+                { status: 400 }
+            );
         }
 
-        return NextResponse.json({ data });
-    } catch (error) {
-        console.error('Unexpected error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ data: result.data, success: true });
+    } catch (error: any) {
+        console.error('Unexpected error in PATCH /api/admin/settings:', error);
+        return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
     }
 }

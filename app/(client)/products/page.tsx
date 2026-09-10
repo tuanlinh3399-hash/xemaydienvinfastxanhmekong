@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import ProductFilterGrid from "@/components/client/product-filter-grid";
 import { ProductDisplay } from "@/components/client/product-card";
 import ProductSection from "@/components/client/product-section";
+import ProductSkeleton from "@/components/client/product-skeleton";
 import Image from "next/image";
 
 // Khắc phục Cache cho Next.js 14 server components
@@ -81,7 +83,15 @@ export default async function ProductsPage({
 
                 {/* Main Filter Grid Section (Client-side fetches everything else with Skeleton) */}
                 <div id="all-products" className="pt-4 scroll-mt-24">
-                    <ProductFilterGrid initialProducts={initialProducts} />
+                    <Suspense fallback={
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <ProductSkeleton key={i} />
+                            ))}
+                        </div>
+                    }>
+                        <ProductFilterGrid initialProducts={initialProducts} />
+                    </Suspense>
                 </div>
             </div>
         </div>

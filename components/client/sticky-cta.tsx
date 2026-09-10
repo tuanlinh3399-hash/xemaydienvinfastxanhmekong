@@ -2,15 +2,24 @@
 
 import { Phone, MessageCircle, Car } from 'lucide-react';
 import Link from 'next/link';
+import { useBranch } from '@/components/client/BranchProvider';
 import { useSiteSettings } from '@/components/client/SiteSettingsProvider';
+import { BRANCHES, DEFAULT_BRANCH_ID } from '@/lib/branches';
 
 export default function StickyContact() {
+    const { currentBranch, isMounted } = useBranch();
     const { settings } = useSiteSettings();
-    
-    const fallbackPhone = "0907697036";
-    const rawHotline = settings?.hotline || settings?.phone || fallbackPhone;
-    const cleanHotline = rawHotline.replace(/\s+/g, '');
-    const zaloUrl = settings?.zalo_link || `https://zalo.me/${cleanHotline}`;
+
+    const defaultBranch = BRANCHES[DEFAULT_BRANCH_ID];
+    const activeBranch = isMounted ? currentBranch : defaultBranch;
+
+    const displayPhone = (isMounted && (settings?.hotline || settings?.phone))
+        ? (settings.hotline || settings.phone!)
+        : activeBranch.hotline;
+    const cleanHotline = displayPhone.replace(/\s+/g, '');
+    const zaloUrl = (isMounted && settings?.zalo_link)
+        ? settings.zalo_link
+        : `https://zalo.me/${cleanHotline}`;
 
     return (
         <div className="fixed bottom-0 left-0 w-full z-40 bg-vinfast-white border-t border-vinfast-gray shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:hidden">
